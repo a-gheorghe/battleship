@@ -1,53 +1,189 @@
 const express = require('express');
-const app = express(); // this creates a new instance of express? whats the constructor? could I just use express() instead of app in my code or would that be wrong becuase a new instance each time?
-
+const app = express();
 const path = require('path');
-
-//bodyParser gives us access to req.body
 const bodyParser = require('body-parser');
-// this tells bodyparser to turn form posts into req.body
-app.use(bodyParser.urlencoded({ extended: false }))
+const expressSession = require('express-session');
+const { Game, Board, Player, Square, Ship, Sequelize } = require('./models');
+const sequelize = new Sequelize(process.env.DATABASE_URL)
+const hbs = require('express-handlebars')({ extname: '.hbs' });
 
-const mongoose = require('mongoose')
-mongoose.connect(process.env.MONGODB_URI)
+app.engine('hbs', hbs);
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'hbs');
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(expressSession({ secret: 'secretAna' }))
 
+// ROUTES
 
-// to see if connection has succeeded or failed
-mongoose.connection.on('connected', () => {
-  console.log('Success! Conntected to MongoDB')
+// Homepage
+app.get('/', (req,res) => {
+  res.render('home');
 });
 
-mongoose.connection.on('error', (err) => {
-  console.log('Error connecting to MongoDB' + err);
-  process.exit(1)
+// Play battleship button
+app.post('/newGame', (req, res) => {
+  // check Player table to see if there are any games with one player
+  // if that array.length === 0, then create new game
+  // else set req.session.gameId = array[0].gameId
+  var q = 'SELECT "gameId" FROM (SELECT "gameId", COUNT("gameId") FROM Players GROUP BY "gameId") as a WHERE count = 1;'
+  sequelize.query(q, { model: Player })
+  .then(players => {
+    console.log('PLAYERS', players)
+    if (players.length === 0){
+      Game.create({ inProgress: true })
+      .then(game => {
+        req.session.gameId = game.dataValues.id
+        console.log('actually in here', req.session)
+        res.render('player', { gameId: req.session.gameId, session: req.session });
+      });
+    } else {
+      req.session.gameId = players[0].dataValues.gameId
+      console.log('in here', req.session)
+      res.render('player', { gameId: req.session.gameId, session: req.session })
+    }
+  })
 });
 
-// public is the folder name
-// if a request requires a specific file, chekc the public folder for it
-// if it is there, serve it from there
-// express static specifically serves index.html on slack so the first get request is not actually required
-app.use(express.static('public'));
+// add player1 to game
+app.post('/newPlayerOne', (req, res) => {
+  Player.create({ gameId: req.session.gameId })
+  .then(player => {
+    req.session.playerOneId = player.dataValues.id;
+    res.json( { redirect: '/boardOne', player1Id: req.session.playerOneId, gameId: req.session.gameId });
+  });
+});
 
-// app.get('/', (req, res) => {
-//   res.sendFile(path.join(__dirname, 'index.html'));
+// add player2 to game
+app.post('/newPlayerTwo', (req, res) => {
+  Player.create({ gameId: req.session.gameId })
+  .then(player => {
+    req.session.playerTwoId = player.dataValues.id;
+    res.json( { redirect: '/boardTwo', playerTwoId: req.session.playerTwoId, gameId: req.session.gameId });
+  });
+});
+
+app.get('/boardOne', (req, res) => {
+  console.log('here')
+  Board.create({ gameId: req.session.gameId, playerId: req.session.playerOneId })
+  .then(board => {
+    req.session.boardOneId = board.dataValues.id
+
+    var height = 10;
+    var width = 10;
+    var grid = []
+    var promises = []
+
+    for (var y = 0; y < height; y++){
+      grid.push([])
+      for (var x = 0; x < width; x++){
+        var square = Square.create( { boardId: req.session.boardOneId, hitStatus: false, locationRow: x, locationColumn: y })
+        grid[y].push(square)
+      }
+      promises.push(Promise.all(grid[y]))
+    }
+
+    Promise.all(promises).then((result) => {
+      req.session.grid = result;
+      console.log('req grid', req.session.grid)
+      res.render('board', {grid: req.session.grid, playerOneId: req.session.playerOneId, playerTwoId: req.session.playerTwoId, gameId: req.session.gameId })
+    })
+
+    // Promise.all(grid)
+    // .then((result) => {
+    //   var count = 0, temp = [];
+    //   req.session.grid = result.reduce((arr1, square) => {
+    //     if (count < 10) {
+    //       temp.push(square);
+    //       count++;
+    //     } else {
+    //       count = 0;
+    //       arr1.push(temp);
+    //       temp = [];
+    //     }
+    //
+    //     return arr1;
+    //   }, [])
+    //   console.log('req grid', req.session.grid)
+    //   res.render('board', {grid: req.session.grid, playerOneId: req.session.playerOneId, playerTwoId: req.session.playerTwoId, gameId: req.session.gameId })
+    // })
+  })
+});
+
+app.get('/boardTwo', (req, res) => {
+  console.log('hi');
+  Board.create({ gameId: req.session.gameId, playerId: req.session.playerOneId })
+  .then(board => {
+    req.session.boardOneId = board.dataValues.id
+
+    var height = 10;
+    var width = 10;
+    var grid = []
+
+    for (var y = 0; y < height; y++){
+      grid.push([])
+      for (var x = 0; x < width; x++){
+        var square = Square.create( { boardId: req.session.boardOneId, hitStatus: false, locationRow: x, locationColumn: y })
+          grid[y].push(square)
+      }
+    }
+    req.session.grid = grid
+  })
+  console.log('req grid', req.session.grid)
+  res.render('board', {grid: req.session.grid, playerOneId: req.session.playerOneId, playerTwoId: req.session.playerTwoId, gameId: req.session.gameId })
+});
+// find all players in game
+// SQL Query: count
+
+// app.get('/findGamePlayers', (req, res) => {
+//   console.log('finding players', req.session.gameId)
+//   Player.findAll({
+//     group: ['id', 'gameId']
+//   })
+//   .then(resp => {
+//     res.json(resp);
+//   })
+//   .catch(err => console.log(err)
 // });
 
-app.get('/newGame', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'newGame.html'));
+app.get('/findGamePlayers', (req, res) => {
+  console.log("HELLO I AM HERE")
+  console.log('req.session', req.session.gameId)
+
+  var q = `SELECT "id" FROM Players WHERE "gameId" = ${req.session.gameId}`
+
+  sequelize.query(q, { model: Player })
+  .then(players => {
+    console.log('players array?', players)
+    res.json({ players: players })
+  })
 })
-// *** Don't need these anymore because of the express.static('public') call****
-// app.get('/styles.css', (req, res) => {
-//   res.sendFile(path.join(__dirname, './styles.css'));
-// });
-//
-// app.get('/script.js', (req, res) => {
-//   res.sendFile(path.join(__dirname, './script.js'));
-// });
-// *****************************************************************************
 
-app.post('/newGame', (req,res) => {
-  console.log(req.body);
-  res.send('here is your post');
+app.get('/boardOneStatus', (req, res) => {
+  // every 5 seconds,
+})
+
+
+
+
+
+// Place a ship on the board
+
+// res.render will automatically look in the views folder for the file named after the render call
+app.get('/allBoards', (req, res) => {
+
 });
+
+app.get('/placeShip', (req, res) => {
+
+});
+
+// Create a random board with ships already placed
+app.get('/randomBoard', (req, res) => {
+
+})
+
+
 
 app.listen(3000, () => console.log('Example app listening on port 3000!'))

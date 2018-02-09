@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title> New Game </title>
+    <link rel="stylesheet" href="./css/styles.css"/>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="http://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script type="text/javascript" src="./script.js"></script>
+  </head>
+  <body>
+      <h1 id="banner" class="top">Battleship</h1>
+      <div class="home-inner-container">
+        <form id="play-game-form" action="/newGame" method="post">
+          <input id ="play-button" class="button" type="submit" value="Play Battleship!">
+        </form>
+        <img id="battleshipPicture" src="https://images-na.ssl-images-amazon.com/images/I/71hdh04hYtL._SL1500_.jpg"/>
+      </div>
+  </body>
+</html>

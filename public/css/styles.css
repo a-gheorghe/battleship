@@ -1,4 +1,57 @@
+h1 {
+  color: blue;
+}
+
 .top {
   background-color: black;
-  color: red;
+  color: blue;
+  height: 100px;
+  line-height: 120px;
+  text-align: center;
+  font-size: 50px;
+}
+/*
+.home-inner-container {
+  display: flex;
+} */
+
+#playGameForm {
+}
+
+#battleshipPicture {
+  height: 300px;
+  width: 500px;
+}
+
+.button {
+  color: white;
+  background-color: blue;
+  border-radius: 20px;
+  height: 50px;
+  width: 150px;
+}
+
+#playerOneButton {
+}
+
+#playerTwoButton {
+}
+
+#container {
+  position: relative;
+  top: 30px;
+  outline: 2px solid black;
+  margin: auto;
+  height: 500px;
+  width: 500px;
+  padding: 0;
+  border: none;
+}
+
+.grid {
+  margin: 0;
+  padding: 0;
+  border: none;
+  outline: 1px solid black;
+  display: inline-block;
 }

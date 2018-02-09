@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title> New Game </title>
+    <link rel="stylesheet" href="./css/styles.css"/>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="http://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script type="text/javascript" src="./script.js"></script>
+  </head>
+  <body>
+    <h1> Choose your player </h1>
+    <p> Game ID is: {{ gameId }} </p>
+
+    <p> req.session is: {{ session }} </p>
+
+    <!-- if req.session.playerOneId exists:
+        hide player one button
+
+    if req.session.playerTwoId exists, hide player two button -->
+
+
+    <button class="button" id="playerOneButton"> Player One </button>
+    <button class="button" id="playerTwoButton"> Player Two </button>
+    <br> <br>
+  </body>
+</html>

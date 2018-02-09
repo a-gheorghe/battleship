@@ -1,0 +1,32 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title> New Game </title>
+    <link rel="stylesheet" href="./css/styles.css"/>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="http://code.jquery.com/jquery-3.3.1.slim.min.js"></script>
+    <script type="text/javascript" src="./script.js"></script>
+  </head>
+  <body>
+
+    <p> Grid looks like: {{ grid }} </p>
+    <div>
+      {{#each grid}}
+      <div class='grid'> {{this}} </div>
+      {{/each}}
+    </div>
+    <!-- <p> Game ID: {{ gameId }} </p> -->
+    <p> Player 1: {{ playerOneId }} </p>
+    <p> Player 2: {{ playerTwoId }} </p>
+
+
+
+
+      <button class="button" id = "emptyBoardButton"> New empty board </button>
+      <button class="button" id = "randomBoardButton"> New random board </button>
+      <button class="button" id = "findAllPlayersButton"> See who's playing </button>
+      <p> A TEN BY TEN BOARD GOES HERE </p>
+
+      <div id="container"></div>
+  </body>
+</html>
